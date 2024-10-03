@@ -25,6 +25,9 @@ class MainActivity : AppCompatActivity() {
         db.getTaskDao()
     }
 
+    private var categories = listOf<CategoryUiData>()
+    private var tasks = listOf<TaskUiData>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -39,23 +42,29 @@ class MainActivity : AppCompatActivity() {
         val categoryAdapter = CategoryListAdapter()
 
         categoryAdapter.setOnClickListener { selected ->
-            val categoryTemp = categories.map { item ->
-                when {
-                    item.name == selected.name && !item.isSelected -> item.copy(isSelected = true)
-                    item.name == selected.name && item.isSelected -> item.copy(isSelected = false)
-                    else -> item
+            if(selected.name == "+"){
+
+                val createCategoryBottomSheet = CreateCategoryBottomSheet()
+                createCategoryBottomSheet.show(supportFragmentManager,"createCategoryBottomSheet")
+            }else {
+                val categoryTemp = categories.map { item ->
+                    when {
+                        item.name == selected.name && !item.isSelected -> item.copy(isSelected = true)
+                        item.name == selected.name && item.isSelected -> item.copy(isSelected = false)
+                        else -> item
+                    }
                 }
+
+                val taskTemp =
+                    if (selected.name != "ALL") {
+                        tasks.filter { it.category == selected.name }
+                    } else {
+                        tasks
+                    }
+                taskAdapter.submitList(taskTemp)
+
+                categoryAdapter.submitList(categoryTemp)
             }
-
-            val taskTemp =
-                if (selected.name != "ALL") {
-                    tasks.filter { it.category == selected.name }
-                } else {
-                    tasks
-                }
-            taskAdapter.submitList(taskTemp)
-
-            categoryAdapter.submitList(categoryTemp)
         }
 
         rvCategory.adapter = categoryAdapter
@@ -100,8 +109,19 @@ class MainActivity : AppCompatActivity() {
                     name = it.name,
                     isSelected = it.isSelected
                 )
+            }.toMutableList()
+
+            categoriesUiData.add(
+                CategoryUiData(
+                    name="+",
+                    isSelected = false
+                )
+            )
+            GlobalScope.launch(Dispatchers.Main) {
+                categories = categoriesUiData
+                adapter.submitList(categoriesUiData)
             }
-            adapter.submitList(categoriesUiData)
+
         }
     }
 
@@ -114,57 +134,11 @@ class MainActivity : AppCompatActivity() {
                     category = it.category
                 )
             }
-            adapter.submitList(tasksUiData)
+            GlobalScope.launch(Dispatchers.Main){
+                tasks = tasksUiData
+                adapter.submitList(tasksUiData)
+            }
         }
     }
 }
 
-val categories: List<CategoryUiData> = listOf()
-
-
-val tasks = listOf(
-    TaskUiData(
-        "Ler 10 páginas do livro atual",
-        "STUDY"
-    ),
-    TaskUiData(
-        "45 min de treino na academia",
-        "HEALTH"
-    ),
-    TaskUiData(
-        "Correr 5km",
-        "HEALTH"
-    ),
-    TaskUiData(
-        "Meditar por 10 min",
-        "WELLNESS"
-    ),
-    TaskUiData(
-        "Silêncio total por 5 min",
-        "WELLNESS"
-    ),
-    TaskUiData(
-        "Descer o livo",
-        "HOME"
-    ),
-    TaskUiData(
-        "Tirar caixas da garagem",
-        "HOME"
-    ),
-    TaskUiData(
-        "Lavar o carro",
-        "HOME"
-    ),
-    TaskUiData(
-        "Gravar aulas DevSpace",
-        "WORK"
-    ),
-    TaskUiData(
-        "Criar planejamento de vídeos da semana",
-        "WORK"
-    ),
-    TaskUiData(
-        "Soltar reels da semana",
-        "WORK"
-    ),
-)
